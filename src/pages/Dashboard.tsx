@@ -5,6 +5,7 @@ import NavigationSidebar from "@/components/dashboard/NavigationSidebar";
 import StatCard from "@/components/dashboard/StatCard";
 import AppointmentCard from "@/components/dashboard/AppointmentCard";
 import MedicationCard from "@/components/dashboard/MedicationCard";
+import PatientDetailsForm from "@/components/forms/PatientDetailsForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -186,6 +187,16 @@ const Dashboard = () => {
                 />
               ))}
             </div>
+          </div>
+        );
+
+      case "profile":
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-foreground">Patient Profile</h2>
+            </div>
+            <PatientDetailsForm />
           </div>
         );
 
