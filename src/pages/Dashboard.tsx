@@ -6,6 +6,8 @@ import StatCard from "@/components/dashboard/StatCard";
 import AppointmentCard from "@/components/dashboard/AppointmentCard";
 import MedicationCard from "@/components/dashboard/MedicationCard";
 import PatientDetailsForm from "@/components/forms/PatientDetailsForm";
+import LocationModal from "@/components/maps/LocationModal";
+import LocationMap from "@/components/maps/LocationMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -63,11 +65,18 @@ const medications = [
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
-  const handleViewLocation = (location: string) => {
-    // Open Google Maps with the location
-    const query = encodeURIComponent(location);
-    window.open(`https://www.google.com/maps/search/${query}`, '_blank');
+  const handleViewLocation = (appointment: any) => {
+    setSelectedLocation({
+      name: appointment.type,
+      address: appointment.location,
+      patientName: appointment.patientName,
+      type: appointment.type,
+      time: `${appointment.date} at ${appointment.time}`,
+    });
+    setIsLocationModalOpen(true);
   };
 
   const handlePlayReminder = (medication: any) => {
@@ -165,6 +174,28 @@ const Dashboard = () => {
                 />
               ))}
             </div>
+            
+            {/* Map Overview */}
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-foreground">
+                  Appointment Locations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LocationMap 
+                  locations={appointments.map(apt => ({
+                    id: apt.id,
+                    name: apt.type,
+                    address: apt.location,
+                    patientName: apt.patientName,
+                    type: apt.type,
+                    time: `${apt.date} at ${apt.time}`,
+                  }))}
+                  className="h-80 w-full"
+                />
+              </CardContent>
+            </Card>
           </div>
         );
 
@@ -221,6 +252,14 @@ const Dashboard = () => {
           {renderDashboardContent()}
         </main>
       </div>
+      
+      {selectedLocation && (
+        <LocationModal
+          isOpen={isLocationModalOpen}
+          onClose={() => setIsLocationModalOpen(false)}
+          location={selectedLocation}
+        />
+      )}
     </div>
   );
 };

@@ -16,7 +16,7 @@ interface Appointment {
 
 interface AppointmentCardProps {
   appointment: Appointment;
-  onViewLocation: (location: string) => void;
+  onViewLocation: (appointment: Appointment) => void;
 }
 
 const AppointmentCard = ({ appointment, onViewLocation }: AppointmentCardProps) => {
@@ -73,7 +73,7 @@ const AppointmentCard = ({ appointment, onViewLocation }: AppointmentCardProps) 
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => onViewLocation(appointment.location)}
+            onClick={() => onViewLocation(appointment)}
             className="text-xs"
           >
             View Map
