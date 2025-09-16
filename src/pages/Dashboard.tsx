@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Pill, Users, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import NavigationSidebar from "@/components/dashboard/NavigationSidebar";
 import StatCard from "@/components/dashboard/StatCard";
@@ -11,62 +12,89 @@ import LocationMap from "@/components/maps/LocationMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-// Mock data
-const stats = [
-  { title: "Upcoming Appointments", value: "3", icon: Calendar, trend: "Next: Today 2:00 PM", color: "primary" as const },
-  { title: "Active Medications", value: "5", icon: Pill, trend: "2 due today", color: "secondary" as const },
-  { title: "Patients", value: "2", icon: Users, trend: "Active care plans", color: "success" as const },
-  { title: "Pending Alerts", value: "2", icon: AlertTriangle, trend: "Medication reminders", color: "warning" as const },
-];
-
-const appointments = [
-  {
-    id: "1",
-    patientName: "Eleanor Johnson",
-    doctorName: "Sarah Wilson",
-    date: "Today, Oct 15",
-    time: "2:00 PM",
-    location: "St. Mary's Hospital, 123 Health St, City",
-    type: "Cardiology Checkup",
-    status: "confirmed" as const
-  },
-  {
-    id: "2",
-    patientName: "Robert Smith",
-    doctorName: "Michael Chen",
-    date: "Tomorrow, Oct 16",
-    time: "10:30 AM",
-    location: "Downtown Medical Center, 456 Care Ave, City",
-    type: "Physical Therapy",
-    status: "upcoming" as const
-  }
-];
-
-const medications = [
-  {
-    id: "1",
-    name: "Lisinopril",
-    dosage: "10mg",
-    times: ["08:00", "20:00"],
-    nextDose: "8:00 PM",
-    remainingPills: 25,
-    instructions: "Take with food"
-  },
-  {
-    id: "2",
-    name: "Metformin",
-    dosage: "500mg",
-    times: ["08:00", "12:00", "18:00"],
-    nextDose: "6:00 PM",
-    remainingPills: 15,
-    instructions: "Take with meals"
-  }
-];
-
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch appointments from Supabase
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            appointment_date,
+            status,
+            notes,
+            latitude,
+            longitude,
+            elder_id,
+            caregiver_id
+          `)
+          .order('appointment_date', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching appointments:', error);
+          return;
+        }
+
+        // Transform the data to match the expected format
+        const transformedAppointments = data?.map(apt => ({
+          id: apt.id,
+          patientName: "Patient", // You may want to join with users table for real names
+          doctorName: "Doctor", // You may want to join with caregivers for real names  
+          date: new Date(apt.appointment_date).toLocaleDateString(),
+          time: new Date(apt.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          location: apt.notes || "Medical Center", // Using notes as location for now
+          type: "Medical Appointment",
+          status: apt.status || "upcoming",
+          latitude: apt.latitude,
+          longitude: apt.longitude,
+        })) || [];
+
+        setAppointments(transformedAppointments);
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
+
+  // Mock data for stats and medications (can be enhanced later)
+  const stats = [
+    { title: "Upcoming Appointments", value: appointments.length.toString(), icon: Calendar, trend: "Next: Today 2:00 PM", color: "primary" as const },
+    { title: "Active Medications", value: "5", icon: Pill, trend: "2 due today", color: "secondary" as const },
+    { title: "Patients", value: "2", icon: Users, trend: "Active care plans", color: "success" as const },
+    { title: "Pending Alerts", value: "2", icon: AlertTriangle, trend: "Medication reminders", color: "warning" as const },
+  ];
+
+  const medications = [
+    {
+      id: "1",
+      name: "Lisinopril",
+      dosage: "10mg",
+      times: ["08:00", "20:00"],
+      nextDose: "8:00 PM",
+      remainingPills: 25,
+      instructions: "Take with food"
+    },
+    {
+      id: "2",
+      name: "Metformin",
+      dosage: "500mg",
+      times: ["08:00", "12:00", "18:00"],
+      nextDose: "6:00 PM",
+      remainingPills: 15,
+      instructions: "Take with meals"
+    }
+  ];
 
   const handleViewLocation = (appointment: any) => {
     setSelectedLocation({
@@ -125,13 +153,19 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {appointments.slice(0, 2).map((appointment) => (
-                    <AppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      onViewLocation={handleViewLocation}
-                    />
-                  ))}
+                  {loading ? (
+                    <p className="text-muted-foreground">Loading appointments...</p>
+                  ) : appointments.length > 0 ? (
+                    appointments.slice(0, 2).map((appointment) => (
+                      <AppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        onViewLocation={handleViewLocation}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">No appointments found</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -166,13 +200,19 @@ const Dashboard = () => {
               </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {appointments.map((appointment) => (
-                <AppointmentCard
-                  key={appointment.id}
-                  appointment={appointment}
-                  onViewLocation={handleViewLocation}
-                />
-              ))}
+              {loading ? (
+                <p className="text-muted-foreground">Loading appointments...</p>
+              ) : appointments.length > 0 ? (
+                appointments.map((appointment) => (
+                  <AppointmentCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    onViewLocation={handleViewLocation}
+                  />
+                ))
+              ) : (
+                <p className="text-muted-foreground">No appointments found</p>
+              )}
             </div>
             
             {/* Map Overview */}
@@ -191,6 +231,8 @@ const Dashboard = () => {
                     patientName: apt.patientName,
                     type: apt.type,
                     time: `${apt.date} at ${apt.time}`,
+                    lat: apt.latitude,
+                    lng: apt.longitude,
                   }))}
                   className="h-80 w-full"
                 />
