@@ -42,32 +42,42 @@ const MedicationCard = ({ medication, onPlayReminder, onUploadImage }: Medicatio
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <p className="text-sm font-medium text-foreground">Dosage: {medication.dosage}</p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-foreground">Dosage:</p>
+            <p className="text-sm text-foreground">{medication.dosage}</p>
+          </div>
           <p className="text-xs text-muted-foreground">{medication.instructions}</p>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium text-foreground">Times: {medication.times.join(", ")}</p>
-            <p className="text-xs text-muted-foreground">Next dose: {medication.nextDose}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-foreground">Remaining: {medication.remainingPills} pills</p>
-            <div className="w-full bg-muted rounded-full h-2 mt-1">
-              <div 
-                className="bg-primary rounded-full h-2 transition-all duration-300" 
-                style={{ width: `${Math.min((medication.remainingPills / 30) * 100, 100)}%` }}
-              />
+        <div className="flex items-start space-x-3">
+          <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-foreground">Times:</p>
+              <p className="text-sm text-foreground">{medication.times.join(", ")}</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Next dose:</p>
+              <p className="text-xs text-muted-foreground">{medication.nextDose}</p>
             </div>
           </div>
         </div>
         
-        <div className="flex space-x-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-foreground">Remaining:</p>
+            <p className="text-sm text-foreground">{medication.remainingPills} pills</p>
+          </div>
+          <div className="w-full bg-muted rounded-full h-2">
+            <div 
+              className="bg-primary rounded-full h-2 transition-all duration-300" 
+              style={{ width: `${Math.min((medication.remainingPills / 30) * 100, 100)}%` }}
+            />
+          </div>
+        </div>
+        
+        <div className="flex space-x-2 pt-2">
           <Button 
             variant="outline" 
             size="sm" 
