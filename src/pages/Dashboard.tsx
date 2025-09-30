@@ -9,6 +9,7 @@ import MedicationCard from "@/components/dashboard/MedicationCard";
 import PatientDetailsForm from "@/components/forms/PatientDetailsForm";
 import LocationModal from "@/components/maps/LocationModal";
 import LocationMap from "@/components/maps/LocationMap";
+import { VoiceAssistant } from "@/components/voice/VoiceAssistant";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +19,7 @@ const Dashboard = () => {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isVoiceAssistantOpen, setIsVoiceAssistantOpen] = useState(false);
 
   // Fetch appointments from Supabase
   useEffect(() => {
@@ -287,7 +289,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-background">
-      <DashboardHeader />
+      <DashboardHeader onVoiceAssistantToggle={() => setIsVoiceAssistantOpen(!isVoiceAssistantOpen)} />
       <div className="flex">
         <NavigationSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         <main className="flex-1 p-6">
@@ -302,6 +304,11 @@ const Dashboard = () => {
           location={selectedLocation}
         />
       )}
+      
+      <VoiceAssistant 
+        isOpen={isVoiceAssistantOpen}
+        onClose={() => setIsVoiceAssistantOpen(false)}
+      />
     </div>
   );
 };

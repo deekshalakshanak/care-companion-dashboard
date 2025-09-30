@@ -1,1 +1,10 @@
 project_id = "uwgulsvliyevccgkxjki"
+
+[functions.voice-stt]
+verify_jwt = false
+
+[functions.voice-assistant]
+verify_jwt = false
+
+[functions.voice-tts]
+verify_jwt = false
