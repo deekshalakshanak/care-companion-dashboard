@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Play, Pause, Eye, EyeOff, X } from "lucide-react";
+import { Mic, MicOff, Play, Pause, Eye, EyeOff, X, Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -140,17 +140,36 @@ export const VoiceAssistant = ({ isOpen, onClose }: VoiceAssistantProps) => {
         body: { text: assistantData.response }
       });
 
+      if (ttsError) {
+        console.error('TTS Error:', ttsError);
+        toast({
+          title: "Voice playback unavailable",
+          description: "Could not generate audio for response",
+          variant: "destructive",
+        });
+      }
+
+      const messageId = Date.now().toString();
+      const audioUrl = ttsError ? undefined : `data:audio/mp3;base64,${ttsData.audioContent}`;
+
       const assistantMessage: Message = {
-        id: Date.now().toString(),
+        id: messageId,
         type: 'assistant',
         content: assistantData.response,
         timestamp: new Date(),
         sql: assistantData.sql,
         sources: assistantData.sources,
-        audioUrl: ttsError ? undefined : `data:audio/mp3;base64,${ttsData.audioContent}`,
+        audioUrl,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Auto-play the audio
+      if (audioUrl) {
+        setTimeout(() => {
+          playAudio(messageId, audioUrl);
+        }, 100);
+      }
 
     } catch (error) {
       console.error('Error getting assistant response:', error);
@@ -179,7 +198,7 @@ export const VoiceAssistant = ({ isOpen, onClose }: VoiceAssistantProps) => {
       audioRef.current.onerror = () => {
         setPlayingAudio(null);
         toast({
-          title: "Audio Error",
+          title: "Voice playback unavailable",
           description: "Could not play audio response.",
           variant: "destructive",
         });
@@ -237,11 +256,12 @@ export const VoiceAssistant = ({ isOpen, onClose }: VoiceAssistantProps) => {
                             size="icon"
                             className="h-6 w-6"
                             onClick={() => playAudio(message.id, message.audioUrl!)}
+                            title="Play audio response"
                           >
                             {playingAudio === message.id ? (
                               <Pause className="h-3 w-3" />
                             ) : (
-                              <Play className="h-3 w-3" />
+                              <Volume2 className="h-3 w-3" />
                             )}
                           </Button>
                         )}

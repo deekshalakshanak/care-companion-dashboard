@@ -20,49 +20,42 @@ serve(async (req) => {
 
     console.log('Converting text to speech:', text);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
-    // Use Lovable AI to generate a simple TTS response
-    // In practice, you would integrate with a proper TTS service
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Use OpenAI TTS API with gpt-4o-mini-tts model
+    const response = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system", 
-            content: "You are a TTS converter. Return only 'TTS_PLACEHOLDER' without any additional text."
-          },
-          {
-            role: "user", 
-            content: `Convert this to speech: ${text}`
-          }
-        ],
+        model: "tts-1",
+        input: text,
+        voice: "alloy",
+        response_format: "mp3",
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Lovable AI error:", response.status, errorText);
-      throw new Error("Failed to process text-to-speech");
+      console.error("OpenAI TTS error:", response.status, errorText);
+      throw new Error("Failed to generate speech");
     }
 
-    // Generate a simple base64 placeholder for audio
-    // In a real implementation, this would be actual audio data from a TTS service
-    const placeholderAudio = "UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Hwu2AaBC9+zPLNeCMAFmpj"; 
+    // Convert audio to base64
+    const audioBuffer = await response.arrayBuffer();
+    const audioArray = new Uint8Array(audioBuffer);
+    const audioBase64 = btoa(String.fromCharCode(...audioArray));
 
     console.log('TTS conversion completed');
 
     return new Response(
       JSON.stringify({ 
-        audioContent: placeholderAudio,
+        audioContent: audioBase64,
         message: "Audio generated successfully" 
       }),
       { 
